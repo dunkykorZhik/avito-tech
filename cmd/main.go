@@ -5,7 +5,7 @@ import (
 
 	"github.com/dunkykorZhik/avito-tech/config"
 	"github.com/dunkykorZhik/avito-tech/internal/db"
-	"github.com/dunkykorZhik/avito-tech/internal/server"
+	fiberServer "github.com/dunkykorZhik/avito-tech/internal/server/fiber"
 )
 
 func main() {
@@ -25,7 +25,8 @@ func main() {
 		return
 	}
 	log.Println("Got Db")
+	defer db.GetDb().Close()
 
-	server.NewFiberServer(cfg, db).Start()
+	fiberServer.NewFiberServer(cfg, db).Start()
 
 }

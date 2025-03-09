@@ -15,6 +15,6 @@ func NewUserService(userRepo repo.User) *UserService {
 	return &UserService{userRepo: userRepo}
 }
 
-func (s *UserService) GetUser(ctx context.Context, id int64) (*entity.User, error) {
-	return s.userRepo.GetUserById(ctx, id)
+func (s *UserService) GetUser(ctx context.Context, username string) (*entity.User, error) {
+	return s.userRepo.GetUserByName(ctx, username)
 }

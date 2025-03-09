@@ -1,19 +1,19 @@
 CREATE TABLE  IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL ,
+    username VARCHAR(50) UNIQUE NOT NULL ,
     password TEXT NOT NULL, 
     balance INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS transfers (
     id SERIAL PRIMARY KEY,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
+    sender VARCHAR(50) NOT NULL,
+    receiver VARCHAR(50) NOT NULL,
     amount INT NOT NULL CHECK (amount > 0),
     made_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
-    CHECK (sender_id <> receiver_id)
+    FOREIGN KEY (sender) REFERENCES users(username) ON DELETE CASCADE,
+    FOREIGN KEY (receiver) REFERENCES users(username) ON DELETE CASCADE,
+    CHECK (sender <> receiver)
 );
 
 CREATE TABLE  IF NOT EXISTS merch (

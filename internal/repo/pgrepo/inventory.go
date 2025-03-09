@@ -65,6 +65,9 @@ func (r *inventoryRepo) checkItemQuantity(ctxTx context.Context, user_id int64, 
 	query := `SELECT quantity FROM inventory WHERE user_id=$1 AND item_name=$2`
 	var q int64
 	if err := r.db.GetDb().QueryRowContext(ctxTx, query, user_id, item_name).Scan(&q); err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
 		return 0, err
 	}
 	return q, nil

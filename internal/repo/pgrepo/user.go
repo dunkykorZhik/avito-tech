@@ -3,10 +3,12 @@ package pgrepo
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/dunkykorZhik/avito-tech/internal/db"
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
+	errs "github.com/dunkykorZhik/avito-tech/internal/errors"
 )
 
 type UserRepo struct {
@@ -22,25 +24,49 @@ type key string
 const TxCtxKey key = "TxCtxKey"
 
 // TODO hash the password
-func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*entity.User, error) {
-	query := `SELECT id, username, password, balance FROM users WHERE id = $1`
+func (r *UserRepo) GetUserByName(ctx context.Context, username string) (*entity.User, error) {
+	query := `SELECT id, username, password, balance FROM users WHERE username = $1`
 	var user entity.User
-	err := r.db.GetDb().QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &user.Balance)
+	err := r.db.GetDb().QueryRowContext(ctx, query, username).Scan(&user.ID, &user.Username, &user.Password, &user.Balance)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errs.ErrNoUser
+		}
 		return nil, err
 	}
 	return &user, nil
 
 }
-func (r *UserRepo) Deposit(ctxTx context.Context, amount, id int64) error {
+
+func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*entity.User, error) {
+	query := `SELECT id, username, password, balance FROM users WHERE id = $1`
+	var user entity.User
+	err := r.db.GetDb().QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &user.Balance)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errs.ErrNoUser
+		}
+		return nil, err
+	}
+	return &user, nil
+
+}
+func (r *UserRepo) Deposit(ctxTx context.Context, amount int64, username string) error {
 	tx, ok := ctxTx.Value(TxCtxKey).(*sql.Tx)
 	if !ok {
 		return fmt.Errorf("no active transaction")
 	}
-	query := `UPDATE users SET balance = balance+$1 WHERE id=%2`
-	_, err := tx.ExecContext(ctxTx, query, amount, id)
+	query := `UPDATE users SET balance = balance+$1 WHERE username=%2`
+	res, err := tx.ExecContext(ctxTx, query, amount, username)
 	if err != nil {
 		return err
+	}
+	num, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		return errs.ErrNoUser
 	}
 	return nil
 
@@ -52,9 +78,16 @@ func (r *UserRepo) Withdraw(ctxTx context.Context, amount, id int64) error {
 		return fmt.Errorf("no active transaction")
 	}
 	query := `UPDATE users SET balance = balance-$1 WHERE id=%2`
-	_, err := tx.ExecContext(ctxTx, query, amount, id)
+	res, err := tx.ExecContext(ctxTx, query, amount, id)
 	if err != nil {
 		return err
+	}
+	num, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		return errs.ErrNoUser
 	}
 	return nil
 

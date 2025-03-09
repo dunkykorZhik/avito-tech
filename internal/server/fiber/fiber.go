@@ -1,4 +1,4 @@
-package server
+package fiberServer
 
 import (
 	"log"
@@ -16,7 +16,7 @@ type fiberServer struct {
 	db  db.Database
 }
 
-func NewFiberServer(cfg *config.Config, db db.Database) Server {
+func NewFiberServer(cfg *config.Config, db db.Database) *fiberServer {
 	fiberApp := fiber.New()
 	return &fiberServer{
 		app: fiberApp,
@@ -39,7 +39,7 @@ func hello(c *fiber.Ctx) error {
 
 func GetUser(service service.User) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, err := service.GetUser(c.Context(), 1)
+		user, err := service.GetUser(c.Context(), "user1")
 		log.Println(err)
 		log.Println(user)
 
