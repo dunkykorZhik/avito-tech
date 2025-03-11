@@ -39,7 +39,7 @@ func (s *TransferService) createTransferProcess(ctx context.Context, transfer en
 	if sender.Balance < transfer.Amount {
 		return errs.ErrNotEnoughBalance
 	}
-	if err := s.userRepo.Withdraw(ctx, transfer.Amount, sender.ID); err != nil {
+	if err := s.userRepo.Withdraw(ctx, transfer.Amount, transfer.Sender); err != nil {
 		return err
 	}
 	if err := s.userRepo.Deposit(ctx, transfer.Amount, transfer.Receiver); err != nil {

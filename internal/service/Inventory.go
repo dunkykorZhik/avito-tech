@@ -20,11 +20,11 @@ func NewInventoryService(userRepo repo.User, inventoryRepo repo.Inventory) *Inve
 	}
 }
 
-func (s *InventoryService) BuyItem(ctx context.Context, id int64, item_name string) error {
+func (s *InventoryService) BuyItem(ctx context.Context, username, item_name string) error {
 	ctx, cancel := context.WithTimeout(ctx, ctxTimeout)
 	defer cancel()
 	err := s.userRepo.WithTransaction(ctx, func(ctxTx context.Context) error {
-		if err := s.buyItemProcess(ctxTx, id, item_name); err != nil {
+		if err := s.buyItemProcess(ctxTx, username, item_name); err != nil {
 			return err
 		}
 		return nil
@@ -32,8 +32,8 @@ func (s *InventoryService) BuyItem(ctx context.Context, id int64, item_name stri
 	return err
 }
 
-func (s *InventoryService) buyItemProcess(ctxTx context.Context, id int64, item_name string) error {
-	user, err := s.userRepo.GetUserById(ctxTx, id)
+func (s *InventoryService) buyItemProcess(ctxTx context.Context, username, item_name string) error {
+	user, err := s.userRepo.GetUserByName(ctxTx, username)
 	if err != nil {
 		return nil
 	}
@@ -44,10 +44,10 @@ func (s *InventoryService) buyItemProcess(ctxTx context.Context, id int64, item_
 	if user.Balance < merch.Cost {
 		return fmt.Errorf("not enough balance")
 	}
-	if err = s.userRepo.Withdraw(ctxTx, merch.Cost, id); err != nil {
+	if err = s.userRepo.Withdraw(ctxTx, merch.Cost, username); err != nil {
 		return err
 	}
-	if err = s.inventoryRepo.AddItem(ctxTx, id, item_name); err != nil {
+	if err = s.inventoryRepo.AddItem(ctxTx, username, item_name); err != nil {
 		return err
 	}
 	return nil

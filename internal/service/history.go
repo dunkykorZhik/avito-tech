@@ -21,23 +21,23 @@ func NewHistoryService(userRepo repo.User, transferRepo repo.Transfer, inventory
 	}
 }
 
-func (s *HistoryService) GetHistory(ctx context.Context, id int64) (*InfoOutput, error) {
+func (s *HistoryService) GetHistory(ctx context.Context, username string) (*InfoOutput, error) {
 	ctx, cancel := context.WithTimeout(ctx, ctxTimeout)
 	defer cancel()
 
-	user, err := s.userRepo.GetUserById(ctx, id)
+	user, err := s.userRepo.GetUserByName(ctx, username)
 	if err != nil {
 		return nil, err
 	}
-	sent, err := s.transferRepo.GetSentHistory(ctx, id)
+	sent, err := s.transferRepo.GetSentHistory(ctx, username)
 	if err != nil {
 		return nil, err
 	}
-	received, err := s.transferRepo.GetReceivedHistory(ctx, id)
+	received, err := s.transferRepo.GetReceivedHistory(ctx, username)
 	if err != nil {
 		return nil, err
 	}
-	inventory, err := s.inventoryRepo.GetInventory(ctx, id)
+	inventory, err := s.inventoryRepo.GetInventory(ctx, username)
 	if err != nil {
 		return nil, err
 	}

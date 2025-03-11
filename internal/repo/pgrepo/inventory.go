@@ -18,8 +18,8 @@ func NewInventoryRepo(db db.Database) *inventoryRepo {
 
 }
 
-func (r *inventoryRepo) AddItem(ctxTx context.Context, user_id int64, item_name string) error {
-	q, err := r.checkItemQuantity(ctxTx, user_id, item_name)
+func (r *inventoryRepo) AddItem(ctxTx context.Context, username, item_name string) error {
+	q, err := r.checkItemQuantity(ctxTx, username, item_name)
 	if err != nil {
 		return err
 	}
@@ -29,29 +29,29 @@ func (r *inventoryRepo) AddItem(ctxTx context.Context, user_id int64, item_name 
 	}
 	query := ``
 	if q > 0 {
-		query = `UPDATE inventory SET quantity=quantity+1 WHERE user_id=$1 AND item_name=$2`
+		query = `UPDATE inventory SET quantity=quantity+1 WHERE username=$1 AND item_name=$2`
 	} else {
-		query = `INSERT INTO inventory (user_id, item_name, 1) VALUES ($1, $2)`
+		query = `INSERT INTO inventory (username, item_name, 1) VALUES ($1, $2)`
 	}
-	_, err = tx.ExecContext(ctxTx, query, user_id, item_name)
+	_, err = tx.ExecContext(ctxTx, query, username, item_name)
 	if err != nil {
 		return err
 	}
 	return nil
 
 }
-func (r *inventoryRepo) GetInventory(ctx context.Context, id int64) ([]entity.Inventory, error) {
+func (r *inventoryRepo) GetInventory(ctx context.Context, username string) ([]entity.Inventory, error) {
 
-	query := `SELECT id, user_id, item_name, quantity FROM inventory WHERE user_id = $1`
+	query := `SELECT id, username, item_name, quantity FROM inventory WHERE username = $1`
 	inventories := []entity.Inventory{}
-	rows, err := r.db.GetDb().QueryContext(ctx, query, id)
+	rows, err := r.db.GetDb().QueryContext(ctx, query, username)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var i entity.Inventory
-		if err := rows.Scan(&i.ID, &i.UserId, &i.ItemName, &i.Quantity); err != nil {
+		if err := rows.Scan(&i.ID, &i.Username, &i.ItemName, &i.Quantity); err != nil {
 			return nil, err
 		}
 		inventories = append(inventories, i)
@@ -61,10 +61,10 @@ func (r *inventoryRepo) GetInventory(ctx context.Context, id int64) ([]entity.In
 	return inventories, nil
 
 }
-func (r *inventoryRepo) checkItemQuantity(ctxTx context.Context, user_id int64, item_name string) (int64, error) {
-	query := `SELECT quantity FROM inventory WHERE user_id=$1 AND item_name=$2`
+func (r *inventoryRepo) checkItemQuantity(ctxTx context.Context, username, item_name string) (int64, error) {
+	query := `SELECT quantity FROM inventory WHERE username=$1 AND item_name=$2`
 	var q int64
-	if err := r.db.GetDb().QueryRowContext(ctxTx, query, user_id, item_name).Scan(&q); err != nil {
+	if err := r.db.GetDb().QueryRowContext(ctxTx, query, username, item_name).Scan(&q); err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil
 		}

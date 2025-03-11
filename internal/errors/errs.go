@@ -10,7 +10,7 @@ import (
 // Constant Errors
 var (
 	ErrNotEnoughBalance = errors.New("not enough balance")
-	ErrNoUser           = errors.New("the user does not exist")
+	ErrNoUser           = errors.New("the user not found")
 	ErrNoItem           = errors.New("the item does not exist")
 	ErrInvalidReq       = errors.New("invalid request body")
 )

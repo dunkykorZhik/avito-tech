@@ -33,16 +33,17 @@ type ReceivedOutput struct {
 const ctxTimeout = time.Second * 5
 
 type User interface {
-	GetUser(ctx context.Context, username string) (*entity.User, error)
+	GenerateToken(ctx context.Context, username string, password string) (string, error)
+	ParseToken(tokenString string) (string, error)
 }
 type Transfer interface {
 	CreateTransfer(ctx context.Context, transfer entity.Transfer) error
 }
 type History interface {
-	GetHistory(ctx context.Context, id int64) (*InfoOutput, error)
+	GetHistory(ctx context.Context, username string) (*InfoOutput, error)
 }
 type Inventory interface {
-	BuyItem(ctx context.Context, id int64, item_name string) error
+	BuyItem(ctx context.Context, username, item_name string) error
 }
 
 type Service struct {
@@ -53,12 +54,14 @@ type Service struct {
 }
 
 type ServiceDependencies struct {
-	Repo *repo.Repositories
+	Repo     *repo.Repositories
+	SignKey  string
+	TokenTTL time.Duration
 }
 
 func NewService(deps ServiceDependencies) *Service {
 	return &Service{
-		User:      NewUserService(deps.Repo.User),
+		User:      NewUserService(deps.Repo.User, deps.SignKey, deps.TokenTTL),
 		Transfer:  NewTransferService(deps.Repo.User, deps.Repo.Transfer),
 		Inventory: NewInventoryService(deps.Repo.User, deps.Repo.Inventory),
 		History:   NewHistoryService(deps.Repo.User, deps.Repo.Transfer, deps.Repo.Inventory),

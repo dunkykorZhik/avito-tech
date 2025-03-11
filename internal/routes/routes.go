@@ -26,7 +26,7 @@ var Validate *validator.Validate
 func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
 }
-func ShopRoutes(app fiber.App, services service.Service) {
+func ShopRoutes(app fiber.Router, services service.Service) {
 	app.Get("/info", GetInfo(services.History))
 	app.Post("/sendCoin", SendCoin(services.Transfer))
 	app.Post("/buy/{item}", BuyItem(services.Inventory))

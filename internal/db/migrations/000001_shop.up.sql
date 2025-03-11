@@ -24,7 +24,7 @@ CREATE TABLE  IF NOT EXISTS merch (
 
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    username INT REFERENCES users(username) ON DELETE CASCADE,
     item_name  VARCHAR(100) REFERENCES merch(item_name) ON DELETE CASCADE,
     quantity INT NOT NULL CHECK (quantity >= 0),
     UNIQUE (user_id, item_id) 

@@ -38,19 +38,16 @@ func (r *UserRepo) GetUserByName(ctx context.Context, username string) (*entity.
 
 }
 
-func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*entity.User, error) {
-	query := `SELECT id, username, password, balance FROM users WHERE id = $1`
-	var user entity.User
-	err := r.db.GetDb().QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username, &user.Password, &user.Balance)
+func (r *UserRepo) CreateUser(ctx context.Context, username, password string) error {
+	query := `INSERT INTO users (username, password, balance) VALUES ( $1, $2, 1000)`
+	_, err := r.db.GetDb().ExecContext(ctx, query, username, password)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errs.ErrNoUser
-		}
-		return nil, err
+		return err
 	}
-	return &user, nil
 
+	return nil
 }
+
 func (r *UserRepo) Deposit(ctxTx context.Context, amount int64, username string) error {
 	tx, ok := ctxTx.Value(TxCtxKey).(*sql.Tx)
 	if !ok {
@@ -71,14 +68,14 @@ func (r *UserRepo) Deposit(ctxTx context.Context, amount int64, username string)
 	return nil
 
 }
-func (r *UserRepo) Withdraw(ctxTx context.Context, amount, id int64) error {
+func (r *UserRepo) Withdraw(ctxTx context.Context, amount int64, username string) error {
 
 	tx, ok := ctxTx.Value(TxCtxKey).(*sql.Tx)
 	if !ok {
 		return fmt.Errorf("no active transaction")
 	}
-	query := `UPDATE users SET balance = balance-$1 WHERE id=%2`
-	res, err := tx.ExecContext(ctxTx, query, amount, id)
+	query := `UPDATE users SET balance = balance-$1 WHERE username=%2`
+	res, err := tx.ExecContext(ctxTx, query, amount, username)
 	if err != nil {
 		return err
 	}
