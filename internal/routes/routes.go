@@ -27,8 +27,10 @@ func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
 }
 func ShopRoutes(app fiber.Router, services service.Service) {
+	app.Post("/auth", Auth(services.User))
+	app.Use(AuthMiddleware(services.User))
 	app.Get("/info", GetInfo(services.History))
 	app.Post("/sendCoin", SendCoin(services.Transfer))
-	app.Post("/buy/{item}", BuyItem(services.Inventory))
+	app.Post("/buy/:item", BuyItem(services.Inventory))
 
 }

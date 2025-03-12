@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
@@ -13,7 +14,7 @@ func GetInfo(historyService service.History) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
 		//TODO change the hardcoded to user from context
-		username := ""
+		username := c.Locals(userCtx).(string)
 		result, err := historyService.GetHistory(c.Context(), username)
 		if err != nil {
 			return handleError(c, err)
@@ -24,15 +25,15 @@ func GetInfo(historyService service.History) fiber.Handler {
 }
 
 type sendCoinRequest struct {
-	toUser string `json:"toUser" validate:"required,max=100"`
-	amount int64  `json:"amount" validate:"required,gt=0"`
+	ToUser string `json:"toUser" validate:"required,max=100"`
+	Amount int64  `json:"amount" validate:"required,gt=0"`
 }
 
 func SendCoin(service service.Transfer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
 		//TODO change the hardcoded to user from context
-		username := ""
+		username := c.Locals(userCtx).(string)
 		var sendCoinRequest sendCoinRequest
 
 		if err := c.BodyParser(&sendCoinRequest); err != nil {
@@ -43,8 +44,8 @@ func SendCoin(service service.Transfer) fiber.Handler {
 		}
 		transfer := entity.Transfer{
 			Sender:   username,
-			Receiver: sendCoinRequest.toUser,
-			Amount:   sendCoinRequest.amount,
+			Receiver: sendCoinRequest.ToUser,
+			Amount:   sendCoinRequest.Amount,
 		}
 
 		err := service.CreateTransfer(c.Context(), transfer)
@@ -58,15 +59,14 @@ func SendCoin(service service.Transfer) fiber.Handler {
 
 func BuyItem(service service.Inventory) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		//TODO change the hardcoded to user from context
 
-		username := ""
-		item := c.Query("item")
+		username := c.Locals(userCtx).(string)
+		item := c.Params("item")
 		if err := Validate.Var(item, "required,max=50"); err != nil {
 			return errorResponse(c, fiber.StatusBadRequest, errs.ValidationError(err))
 
-		} //TODO validations
-
+		}
+		log.Println(username, item)
 		if err := service.BuyItem(c.Context(), username, item); err != nil {
 			return handleError(c, err)
 		}
@@ -75,8 +75,8 @@ func BuyItem(service service.Inventory) fiber.Handler {
 }
 
 type AuthRequest struct {
-	username string `json:"username" validate:"required,max=100"`
-	password string `json:"password" validate:"required,min=6,max=100"`
+	Username string `json:"username" validate:"required,max=100"`
+	Password string `json:"password" validate:"required,min=6,max=100"`
 }
 
 func Auth(service service.User) fiber.Handler {
@@ -86,10 +86,11 @@ func Auth(service service.User) fiber.Handler {
 		if err := c.BodyParser(&authReq); err != nil {
 			return errorResponse(c, fiber.StatusBadRequest, errs.ErrInvalidReq.Error())
 		}
+		log.Println(authReq)
 		if err := Validate.Struct(authReq); err != nil {
 			return errorResponse(c, fiber.StatusBadRequest, errs.ValidationError(err))
 		}
-		token, err := service.GenerateToken(c.Context(), authReq.username, authReq.password)
+		token, err := service.GenerateToken(c.Context(), authReq.Username, authReq.Password)
 		if err != nil {
 			return handleError(c, err)
 		}

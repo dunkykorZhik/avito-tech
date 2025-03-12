@@ -39,6 +39,7 @@ func (r *UserRepo) GetUserByName(ctx context.Context, username string) (*entity.
 }
 
 func (r *UserRepo) CreateUser(ctx context.Context, username, password string) error {
+
 	query := `INSERT INTO users (username, password, balance) VALUES ( $1, $2, 1000)`
 	_, err := r.db.GetDb().ExecContext(ctx, query, username, password)
 	if err != nil {
@@ -53,7 +54,7 @@ func (r *UserRepo) Deposit(ctxTx context.Context, amount int64, username string)
 	if !ok {
 		return fmt.Errorf("no active transaction")
 	}
-	query := `UPDATE users SET balance = balance+$1 WHERE username=%2`
+	query := `UPDATE users SET balance = balance+$1 WHERE username=$2`
 	res, err := tx.ExecContext(ctxTx, query, amount, username)
 	if err != nil {
 		return err
@@ -74,7 +75,7 @@ func (r *UserRepo) Withdraw(ctxTx context.Context, amount int64, username string
 	if !ok {
 		return fmt.Errorf("no active transaction")
 	}
-	query := `UPDATE users SET balance = balance-$1 WHERE username=%2`
+	query := `UPDATE users SET balance = balance-$1 WHERE username=$2`
 	res, err := tx.ExecContext(ctxTx, query, amount, username)
 	if err != nil {
 		return err

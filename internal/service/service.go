@@ -63,7 +63,7 @@ func NewService(deps ServiceDependencies) *Service {
 	return &Service{
 		User:      NewUserService(deps.Repo.User, deps.SignKey, deps.TokenTTL),
 		Transfer:  NewTransferService(deps.Repo.User, deps.Repo.Transfer),
-		Inventory: NewInventoryService(deps.Repo.User, deps.Repo.Inventory),
+		Inventory: NewInventoryService(deps.Repo.User, deps.Repo.Inventory, deps.Repo.Merch),
 		History:   NewHistoryService(deps.Repo.User, deps.Repo.Transfer, deps.Repo.Inventory),
 	}
 }

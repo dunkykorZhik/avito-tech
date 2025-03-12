@@ -30,7 +30,10 @@ func (s *UserService) GenerateToken(ctx context.Context, username string, passwo
 	defer cancel()
 	user, err := s.userRepo.GetUserByName(ctx, username)
 	if err == errs.ErrNoUser {
-		s.createUser(ctx, username, password)
+		err = s.createUser(ctx, username, password)
+		if err != nil {
+			return "", err
+		}
 	} else if err != nil {
 		return "", err
 	} else if user.Password != password {
@@ -46,7 +49,7 @@ func (s *UserService) GenerateToken(ctx context.Context, username string, passwo
 		Subject:   username,
 	}
 
-	tokenString, err := token.SignedString(s.signKey)
+	tokenString, err := token.SignedString([]byte(s.signKey))
 	if err != nil {
 		return "", err
 	}
@@ -56,6 +59,7 @@ func (s *UserService) GenerateToken(ctx context.Context, username string, passwo
 
 func (s *UserService) createUser(ctx context.Context, username, password string) error {
 	//hash the password
+
 	return s.userRepo.CreateUser(ctx, username, password)
 
 }

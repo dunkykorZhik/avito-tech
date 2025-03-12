@@ -2,6 +2,7 @@ package fiberServer
 
 import (
 	"log"
+	"time"
 
 	"github.com/dunkykorZhik/avito-tech/config"
 	"github.com/dunkykorZhik/avito-tech/internal/db"
@@ -34,7 +35,9 @@ func (f *fiberServer) Start() {
 
 func (f *fiberServer) initializeHandlers() {
 	deps := service.ServiceDependencies{
-		Repo: repo.NewRepositories(f.db),
+		Repo:     repo.NewRepositories(f.db),
+		SignKey:  "secret",
+		TokenTTL: time.Minute * 10,
 	}
 	services := service.NewService(deps)
 	api := f.app.Group("/api")

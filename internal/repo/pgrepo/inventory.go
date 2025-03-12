@@ -31,7 +31,7 @@ func (r *inventoryRepo) AddItem(ctxTx context.Context, username, item_name strin
 	if q > 0 {
 		query = `UPDATE inventory SET quantity=quantity+1 WHERE username=$1 AND item_name=$2`
 	} else {
-		query = `INSERT INTO inventory (username, item_name, 1) VALUES ($1, $2)`
+		query = `INSERT INTO inventory (username, item_name, quantity) VALUES ($1, $2, 1)`
 	}
 	_, err = tx.ExecContext(ctxTx, query, username, item_name)
 	if err != nil {

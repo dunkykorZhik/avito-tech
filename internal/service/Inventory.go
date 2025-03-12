@@ -13,10 +13,11 @@ type InventoryService struct {
 	merchRepo     repo.Merch
 }
 
-func NewInventoryService(userRepo repo.User, inventoryRepo repo.Inventory) *InventoryService {
+func NewInventoryService(userRepo repo.User, inventoryRepo repo.Inventory, merchRepo repo.Merch) *InventoryService {
 	return &InventoryService{
 		userRepo:      userRepo,
 		inventoryRepo: inventoryRepo,
+		merchRepo:     merchRepo,
 	}
 }
 
@@ -35,7 +36,7 @@ func (s *InventoryService) BuyItem(ctx context.Context, username, item_name stri
 func (s *InventoryService) buyItemProcess(ctxTx context.Context, username, item_name string) error {
 	user, err := s.userRepo.GetUserByName(ctxTx, username)
 	if err != nil {
-		return nil
+		return err
 	}
 	merch, err := s.merchRepo.GetMerch(ctxTx, item_name)
 	if err != nil {

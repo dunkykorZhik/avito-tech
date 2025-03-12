@@ -24,8 +24,20 @@ CREATE TABLE  IF NOT EXISTS merch (
 
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
-    username INT REFERENCES users(username) ON DELETE CASCADE,
+    username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
     item_name  VARCHAR(100) REFERENCES merch(item_name) ON DELETE CASCADE,
     quantity INT NOT NULL CHECK (quantity >= 0),
-    UNIQUE (user_id, item_id) 
+    UNIQUE (username, item_name) 
 );
+
+INSERT INTO merch (item_name, cost) VALUES
+('t-shirt', 80),
+('cup', 20),
+('book', 50),
+('pen', 10),
+('powerbank', 200),
+('hoody', 300),
+('umbrella', 200),
+('socks', 10),
+('wallet', 50),
+('pink-hoody', 500);

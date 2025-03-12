@@ -20,7 +20,7 @@ func NewMerchRepo(db db.Database) *merchRepo {
 }
 
 func (r *merchRepo) GetMerch(ctx context.Context, item_name string) (*entity.Merch, error) {
-	query := `SELECT id, item_name, cost FROM merch WHERE item_name = $1`
+	query := `SELECT item_id, item_name, cost FROM merch WHERE item_name = $1`
 	var merch entity.Merch
 	err := r.db.GetDb().QueryRowContext(ctx, query, item_name).Scan(&merch.Id, &merch.ItemName, &merch.Cost)
 	if err != nil {

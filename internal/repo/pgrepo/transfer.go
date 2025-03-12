@@ -33,7 +33,7 @@ func (t *transferRepo) CreateTransfer(ctxTx context.Context, transfer entity.Tra
 }
 
 func (t *transferRepo) GetSentHistory(ctx context.Context, username string) ([]entity.Transfer, error) {
-	query := `SELECT id, sender, receiver, amount, made_at FROM transfers WHERE sender = %1`
+	query := `SELECT id, sender, receiver, amount, made_at FROM transfers WHERE sender = $1`
 	transfers := []entity.Transfer{}
 	rows, err := t.db.GetDb().QueryContext(ctx, query, username)
 	if err != nil {
