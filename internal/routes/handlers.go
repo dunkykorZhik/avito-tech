@@ -1,100 +1,93 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
 	errs "github.com/dunkykorZhik/avito-tech/internal/errors"
 	"github.com/dunkykorZhik/avito-tech/internal/service"
-	"github.com/gofiber/fiber/v2"
 )
 
-func GetInfo(historyService service.History) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
-		//TODO change the hardcoded to user from context
-		username := c.Locals(userCtx).(string)
-		result, err := historyService.GetHistory(c.Context(), username)
-		if err != nil {
-			return handleError(c, err)
+func GetInfo(service service.History) handlefuncWithError {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		//get user from context -> call service -> send answer
+		username, _ := r.Context().Value(userCtx).(string)
+		if username == "" {
+			return errs.ErrUnAuth
 		}
-		return c.Status(fiber.StatusOK).JSON(result)
-
+		output, err := service.GetHistory(r.Context(), username)
+		if err != nil {
+			return err
+		}
+		return writeJSON(w, &output)
 	}
 }
 
-type sendCoinRequest struct {
-	ToUser string `json:"toUser" validate:"required,max=100"`
-	Amount int64  `json:"amount" validate:"required,gt=0"`
-}
-
-func SendCoin(service service.Transfer) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-
-		//TODO change the hardcoded to user from context
-		username := c.Locals(userCtx).(string)
-		var sendCoinRequest sendCoinRequest
-
-		if err := c.BodyParser(&sendCoinRequest); err != nil {
-			return errorResponse(c, fiber.StatusBadRequest, errs.ErrInvalidReq.Error())
+func SendCoin(service service.Transfer) handlefuncWithError {
+	type sendCoinRequest struct {
+		ToUser string `json:"toUser" validate:"required,max=100"`
+		Amount int64  `json:"amount" validate:"required,gt=0"`
+	}
+	var sendCoinPayload sendCoinRequest
+	return func(w http.ResponseWriter, r *http.Request) error {
+		//get user from context -> call service -> send answer
+		username := r.Context().Value(userCtx).(string)
+		if username == "" {
+			return errs.ErrUnAuth
 		}
-		if err := Validate.Struct(sendCoinRequest); err != nil {
-			return errorResponse(c, fiber.StatusBadRequest, errs.ValidationError(err))
+		if err := readJSON(w, r, &sendCoinPayload); err != nil {
+			return errs.WrapError(err, http.StatusBadRequest)
+		}
+		if err := Validate.Struct(sendCoinPayload); err != nil {
+			return errs.WrapError(err, http.StatusBadRequest)
 		}
 		transfer := entity.Transfer{
 			Sender:   username,
-			Receiver: sendCoinRequest.ToUser,
-			Amount:   sendCoinRequest.Amount,
+			Receiver: sendCoinPayload.ToUser,
+			Amount:   sendCoinPayload.Amount,
 		}
-
-		err := service.CreateTransfer(c.Context(), transfer)
-		if err != nil {
-			return handleError(c, err)
-		}
-		return c.SendStatus(http.StatusOK)
+		return service.CreateTransfer(r.Context(), transfer)
 
 	}
 }
 
-func BuyItem(service service.Inventory) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-
-		username := c.Locals(userCtx).(string)
-		item := c.Params("item")
-		if err := Validate.Var(item, "required,max=50"); err != nil {
-			return errorResponse(c, fiber.StatusBadRequest, errs.ValidationError(err))
-
+func BuyItem(service service.Inventory) handlefuncWithError {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		//get user from context -> call service -> send answer
+		username := r.Context().Value(userCtx).(string)
+		if username == "" {
+			return errs.ErrUnAuth
 		}
-		log.Println(username, item)
-		if err := service.BuyItem(c.Context(), username, item); err != nil {
-			return handleError(c, err)
-		}
-		return c.SendStatus(fiber.StatusOK)
+		item_name := r.PathValue("item")
+		return service.BuyItem(r.Context(), username, item_name)
+
 	}
+
 }
 
-type AuthRequest struct {
-	Username string `json:"username" validate:"required,max=100"`
-	Password string `json:"password" validate:"required,min=6,max=100"`
-}
+func Auth(service service.User) handlefuncWithError {
+	type AuthRequest struct {
+		Username string `json:"username" validate:"required,min=1,max=100"`
+		Password string `json:"password" validate:"required,min=6,max=100"`
+	}
 
-func Auth(service service.User) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		c.Set(fiber.HeaderAccept, fiber.MIMEApplicationJSON)
-		var authReq AuthRequest
-		if err := c.BodyParser(&authReq); err != nil {
-			return errorResponse(c, fiber.StatusBadRequest, errs.ErrInvalidReq.Error())
+	type envelope struct {
+		Token string `json:"token"`
+	}
+	var authRequest AuthRequest
+	return func(w http.ResponseWriter, r *http.Request) error {
+
+		if err := readJSON(w, r, &authRequest); err != nil {
+			return errs.WrapError(err, http.StatusBadRequest)
 		}
-		log.Println(authReq)
-		if err := Validate.Struct(authReq); err != nil {
-			return errorResponse(c, fiber.StatusBadRequest, errs.ValidationError(err))
+		if err := Validate.Struct(authRequest); err != nil {
+			return errs.WrapError(err, http.StatusBadRequest)
 		}
-		token, err := service.GenerateToken(c.Context(), authReq.Username, authReq.Password)
+		token, err := service.GenerateToken(r.Context(), authRequest.Username, authRequest.Password)
 		if err != nil {
-			return handleError(c, err)
+			return err
 		}
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
+		return writeJSON(w, &envelope{Token: token})
 
 	}
 

@@ -1,5 +1,9 @@
 server:
   port: :8080
+
+jwt:
+  signkey: secret
+  tokenTTL: 5m
   
 db:
   host: localhost
@@ -8,4 +12,7 @@ db:
   password: password
   dbname: shop
   sslmode: disable
+  max_open_conn: 30
+  max_idle_conn: 30
+  max_idle_time: 15m
   

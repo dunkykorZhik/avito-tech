@@ -2,26 +2,50 @@ package errs
 
 import (
 	"errors"
-	"fmt"
-
-	"github.com/go-playground/validator/v10"
+	"net/http"
 )
 
 // Constant Errors
 var (
-	ErrNotEnoughBalance = errors.New("not enough balance")
-	ErrNoUser           = errors.New("the user not found")
-	ErrNoItem           = errors.New("the item does not exist")
-	ErrInvalidReq       = errors.New("invalid request body")
+	ErrNotEnoughBalance = StatusError{
+		Err:    errors.New("not enough balance"),
+		Status: http.StatusBadRequest,
+	}
+
+	ErrNoUser = StatusError{
+		Err:    errors.New("the user not found"),
+		Status: http.StatusBadRequest,
+	}
+	ErrNoItem = StatusError{
+		Err:    errors.New("the item do not exist"),
+		Status: http.StatusBadRequest,
+	}
+	ErrUnAuth = StatusError{
+		Err:    errors.New("the user is not authorized"),
+		Status: http.StatusUnauthorized,
+	}
+	//ErrInvalidReq       = errors.New("invalid request body")
 )
 
-func ValidationError(errs error) string {
-	s := "Folloing Input fields need to be changed:\n"
-	for _, err := range errs.(validator.ValidationErrors) {
+/*
+200-ok
+unauthorized
+bad request
+internal
+*/
 
-		i := fmt.Sprintf("Field : %s does not satisfy the requirement : [%s]\n", err.Field(), err.Tag())
-		s = s + i
+type StatusError struct {
+	Err    error
+	Status int
+}
 
+func WrapError(err error, status int) StatusError {
+	return StatusError{
+		Err:    err,
+		Status: status,
 	}
-	return s
+}
+
+func (s StatusError) Error() string {
+	return s.Err.Error()
 }

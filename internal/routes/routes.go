@@ -1,9 +1,11 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/dunkykorZhik/avito-tech/internal/service"
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 /*
@@ -21,16 +23,24 @@ middleware
 -no such item
 */
 
-var Validate *validator.Validate
+var (
+	Validate *validator.Validate
+	userCtx  string = "username"
+)
+
+type handlefuncWithError func(w http.ResponseWriter, r *http.Request) error
 
 func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
 }
-func ShopRoutes(app fiber.Router, services service.Service) {
-	app.Post("/auth", Auth(services.User))
-	app.Use(AuthMiddleware(services.User))
-	app.Get("/info", GetInfo(services.History))
-	app.Post("/sendCoin", SendCoin(services.Transfer))
-	app.Post("/buy/:item", BuyItem(services.Inventory))
+func AddRoutes(mux *http.ServeMux, services *service.Service, logger *zap.SugaredLogger) {
+	loggingMw := LoggingMiddleware(logger)
+	authMw := AuthMiddleware(services.User)
+
+	mux.Handle("POST /api/auth", loggingMw(Auth(services.User)))
+
+	mux.Handle("GET /api/info", loggingMw(authMw(GetInfo(services.History))))
+	mux.Handle("POST /api/sendCoin", loggingMw(authMw(SendCoin(services.Transfer))))
+	mux.Handle("GET /api/buy/{item}", loggingMw(authMw(BuyItem(services.Inventory))))
 
 }

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/dunkykorZhik/avito-tech/internal/db"
+	"github.com/dunkykorZhik/avito-tech/internal/app/db"
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
 )
 

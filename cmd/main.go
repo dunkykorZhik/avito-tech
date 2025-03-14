@@ -1,32 +1,34 @@
 package main
 
 import (
-	"log"
+	"os"
 
-	"github.com/dunkykorZhik/avito-tech/config"
-	"github.com/dunkykorZhik/avito-tech/internal/db"
-	fiberServer "github.com/dunkykorZhik/avito-tech/internal/server/fiber"
+	"github.com/dunkykorZhik/avito-tech/internal/app/config"
+	"github.com/dunkykorZhik/avito-tech/internal/app/db"
+	"github.com/dunkykorZhik/avito-tech/internal/app/server"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+	logger.Infow("Initializing configurations...")
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatal("Cannot get the Config", err)
+		logger.Fatalw("cannot get config ", err)
 		return
 	}
 
 	db, err := db.NewPostgresDB(cfg)
-	if err != nil {
-		log.Fatal("Cannot connect to Db ", err)
+	if err != nil || db == nil {
+		logger.Fatalw("cannot connect to databse ", err)
 		return
 	}
-	if db == nil {
-		log.Fatal("Cannot connect to Db ", err)
-		return
-	}
-	log.Println("Got Db")
 	defer db.GetDb().Close()
 
-	fiberServer.NewFiberServer(cfg, db).Start()
+	srv := server.NewHttpServer(cfg, logger, db)
 
+	err = srv.ListenAndServe()
+	logger.Error(err.Error())
+	os.Exit(1)
 }

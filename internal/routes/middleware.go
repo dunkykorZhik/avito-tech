@@ -1,48 +1,68 @@
 package routes
 
 import (
-	"log"
+	"context"
+	"errors"
+	"net/http"
 	"strings"
 
+	errs "github.com/dunkykorZhik/avito-tech/internal/errors"
 	"github.com/dunkykorZhik/avito-tech/internal/service"
-	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
-const userCtx = "Username"
-const prefix = "Bearer"
+func LoggingMiddleware(logger *zap.SugaredLogger) func(handlefuncWithError) http.HandlerFunc {
+	return func(h handlefuncWithError) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			err := h(w, r)
+			if err != nil {
+				var statusErr *errs.StatusError
+				if errors.As(err, &statusErr) {
+					errorJSON(w, err.Error(), statusErr.Status)
 
-func AuthMiddleware(service service.User) fiber.Handler {
-
-	return func(c *fiber.Ctx) error {
-		tokenString, ok := getBearerToken(c)
-		if !ok {
-			log.Println("Cannot get bearer token")
-			return errorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+				} else {
+					logger.Errorf("error : %v, the path: %v%v", err, r.Method, r.URL.RequestURI())
+					errorJSON(w, "internal server error", http.StatusInternalServerError)
+				}
+				return
+			}
+			w.WriteHeader(http.StatusOK)
 		}
-		username, err := service.ParseToken(tokenString)
-		if err != nil {
-			log.Println("Cannot Parse  token cause", err)
-			return errorResponse(c, fiber.StatusUnauthorized, "unauthorized")
-		}
-		c.Locals(userCtx, username)
-
-		return c.Next()
 
 	}
 
 }
 
-func getBearerToken(c *fiber.Ctx) (string, bool) {
-	header := c.Get("Authorization")
-	if header == "" {
+func AuthMiddleware(service service.User) func(handlefuncWithError) handlefuncWithError {
+	return func(hwe handlefuncWithError) handlefuncWithError {
+		return func(w http.ResponseWriter, r *http.Request) error {
+			token, ok := getBearerToken(r)
+			if !ok {
+				return errs.ErrUnAuth
+			}
+			username, err := service.ParseToken(token)
+			if err != nil {
+				return err
+			}
+			ctx := context.WithValue(r.Context(), userCtx, username)
+			return hwe(w, r.WithContext(ctx))
+
+		}
+	}
+}
+
+func getBearerToken(r *http.Request) (string, bool) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", false
+	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
 
 		return "", false
 	}
-	parts := strings.Split(header, " ")
-	if len(parts) != 2 || parts[0] != prefix {
 
-		return "", false
-	}
-	return parts[1], true
-
+	token := parts[1]
+	return token, true
 }

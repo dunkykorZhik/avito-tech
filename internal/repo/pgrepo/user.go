@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dunkykorZhik/avito-tech/internal/db"
+	"github.com/dunkykorZhik/avito-tech/internal/app/db"
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
 	errs "github.com/dunkykorZhik/avito-tech/internal/errors"
 )

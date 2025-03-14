@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 
-	"github.com/dunkykorZhik/avito-tech/internal/db"
+	"github.com/dunkykorZhik/avito-tech/internal/app/db"
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
 	"github.com/dunkykorZhik/avito-tech/internal/repo/pgrepo"
 )

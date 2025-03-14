@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/dunkykorZhik/avito-tech/config"
+	"github.com/dunkykorZhik/avito-tech/internal/app/config"
 )
 
 type postgresDB struct {
