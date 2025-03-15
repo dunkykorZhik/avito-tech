@@ -21,7 +21,7 @@ func NewHistoryService(userRepo repo.User, transferRepo repo.Transfer, inventory
 	}
 }
 
-func (s *HistoryService) GetHistory(ctx context.Context, username string) (*InfoOutput, error) {
+func (s *HistoryService) GetHistory(ctx context.Context, username string) (*InfoResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, ctxTimeout)
 	defer cancel()
 
@@ -45,7 +45,7 @@ func (s *HistoryService) GetHistory(ctx context.Context, username string) (*Info
 
 }
 
-func createOutput(balance int64, sent, received []entity.Transfer, inventory []entity.Inventory) *InfoOutput {
+func createOutput(balance int64, sent, received []entity.Transfer, inventory []entity.Inventory) *InfoResponse {
 
 	s := make([]SentOutput, 0, len(sent))
 	for _, transfer := range sent {
@@ -72,7 +72,7 @@ func createOutput(balance int64, sent, received []entity.Transfer, inventory []e
 		})
 	}
 
-	return &InfoOutput{
+	return &InfoResponse{
 		Balance:         balance,
 		CoinHistory:     CoinHistory{s, r},
 		InventoryOutput: i,

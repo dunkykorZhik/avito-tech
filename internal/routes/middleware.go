@@ -21,12 +21,11 @@ func LoggingMiddleware(logger *zap.SugaredLogger) func(handlefuncWithError) http
 					errorJSON(w, err.Error(), statusErr.Status)
 
 				} else {
-					logger.Errorf("error : %v, the path: %v%v", err, r.Method, r.URL.RequestURI())
+					logger.Errorf("error : %v, the path: %v%v", err.Error(), r.Method, r.URL.RequestURI())
 					errorJSON(w, "internal server error", http.StatusInternalServerError)
 				}
 				return
 			}
-			w.WriteHeader(http.StatusOK)
 		}
 
 	}

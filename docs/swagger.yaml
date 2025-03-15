@@ -1,0 +1,203 @@
+basePath: /api
+definitions:
+  routes.AuthRequest:
+    properties:
+      password:
+        maxLength: 100
+        minLength: 6
+        type: string
+      username:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  routes.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  routes.ErrorResponse:
+    properties:
+      errors:
+        type: string
+    type: object
+  routes.SendCoinRequest:
+    properties:
+      amount:
+        type: integer
+      toUser:
+        maxLength: 100
+        type: string
+    required:
+    - amount
+    - toUser
+    type: object
+  service.CoinHistory:
+    properties:
+      received:
+        items:
+          $ref: '#/definitions/service.ReceivedOutput'
+        type: array
+      sent:
+        items:
+          $ref: '#/definitions/service.SentOutput'
+        type: array
+    type: object
+  service.InfoResponse:
+    properties:
+      coinHistory:
+        $ref: '#/definitions/service.CoinHistory'
+      coins:
+        type: integer
+      inventory:
+        items:
+          $ref: '#/definitions/service.InventoryOutput'
+        type: array
+    type: object
+  service.InventoryOutput:
+    properties:
+      quantity:
+        type: integer
+      type:
+        type: string
+    type: object
+  service.ReceivedOutput:
+    properties:
+      Amount:
+        type: integer
+      fromUser:
+        type: string
+    type: object
+  service.SentOutput:
+    properties:
+      Amount:
+        type: integer
+      toUser:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for managing shop transactions.
+  title: API Avito Shop
+  version: 1.0.0
+paths:
+  /auth:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: AuthRequest
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Аутентификация и получение JWT-токена.
+  /buy/{item}:
+    get:
+      parameters:
+      - description: Item Name
+        in: path
+        name: item
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Купить предмет за монеты.
+  /info:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.InfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить информацию о монетах, инвентаре и истории транзакций.
+  /sendCoin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: SendCoinRequest
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.SendCoinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Отправить монеты другому пользователю.
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

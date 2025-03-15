@@ -8,7 +8,7 @@ import (
 	"github.com/dunkykorZhik/avito-tech/internal/repo"
 )
 
-type InfoOutput struct {
+type InfoResponse struct {
 	Balance         int64             `json:"coins"`
 	InventoryOutput []InventoryOutput `json:"inventory"`
 	CoinHistory     CoinHistory       `json:"coinHistory"`
@@ -40,7 +40,7 @@ type Transfer interface {
 	CreateTransfer(ctx context.Context, transfer entity.Transfer) error
 }
 type History interface {
-	GetHistory(ctx context.Context, username string) (*InfoOutput, error)
+	GetHistory(ctx context.Context, username string) (*InfoResponse, error)
 }
 type Inventory interface {
 	BuyItem(ctx context.Context, username, item_name string) error

@@ -7,23 +7,24 @@ import (
 
 // Constant Errors
 var (
-	ErrNotEnoughBalance = StatusError{
+	ErrNotEnoughBalance = &StatusError{
 		Err:    errors.New("not enough balance"),
 		Status: http.StatusBadRequest,
 	}
 
-	ErrNoUser = StatusError{
+	ErrNoUser = &StatusError{
 		Err:    errors.New("the user not found"),
 		Status: http.StatusBadRequest,
 	}
-	ErrNoItem = StatusError{
+	ErrNoItem = &StatusError{
 		Err:    errors.New("the item do not exist"),
 		Status: http.StatusBadRequest,
 	}
-	ErrUnAuth = StatusError{
+	ErrUnAuth = &StatusError{
 		Err:    errors.New("the user is not authorized"),
 		Status: http.StatusUnauthorized,
 	}
+
 	//ErrInvalidReq       = errors.New("invalid request body")
 )
 
@@ -39,8 +40,8 @@ type StatusError struct {
 	Status int
 }
 
-func WrapError(err error, status int) StatusError {
-	return StatusError{
+func WrapError(err error, status int) *StatusError {
+	return &StatusError{
 		Err:    err,
 		Status: status,
 	}

@@ -13,6 +13,14 @@ import (
 	"go.uber.org/zap"
 )
 
+//	@title						API Avito Shop
+//	@version					1.0.0
+//	@description				API for managing shop transactions.
+//	@host						localhost:8080
+//	@BasePath					/api
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
 func NewHttpServer(cfg *config.Config, logger *zap.SugaredLogger, db db.Database) *http.Server {
 	mux := http.NewServeMux()
 

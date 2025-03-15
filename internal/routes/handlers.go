@@ -8,6 +8,13 @@ import (
 	"github.com/dunkykorZhik/avito-tech/internal/service"
 )
 
+//	@Summary	Получить информацию о монетах, инвентаре и истории транзакций.
+//	@Security	BearerAuth
+//	@Success	200	{object}	service.InfoResponse
+//	@Failure	400	{object}	ErrorResponse
+//	@Failure	401	{object}	ErrorResponse
+//	@Failure	500	{object}	ErrorResponse
+//	@Router		/info [get]
 func GetInfo(service service.History) handlefuncWithError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		//get user from context -> call service -> send answer
@@ -15,42 +22,66 @@ func GetInfo(service service.History) handlefuncWithError {
 		if username == "" {
 			return errs.ErrUnAuth
 		}
-		output, err := service.GetHistory(r.Context(), username)
+		infoResponse, err := service.GetHistory(r.Context(), username)
 		if err != nil {
 			return err
 		}
-		return writeJSON(w, &output)
+		return writeJSON(w, http.StatusOK, &infoResponse)
 	}
 }
 
+type SendCoinRequest struct {
+	ToUser string `json:"toUser" validate:"required,max=100"`
+	Amount int64  `json:"amount" validate:"required,gt=0"`
+}
+
+//	@Summary	Отправить монеты другому пользователю.
+//	@Security	BearerAuth
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body	SendCoinRequest	true	"SendCoinRequest"
+//	@Success	200
+//	@Failure	400	{object}	ErrorResponse
+//	@Failure	401	{object}	ErrorResponse
+//	@Failure	500	{object}	ErrorResponse
+//	@Router		/sendCoin [post]
 func SendCoin(service service.Transfer) handlefuncWithError {
-	type sendCoinRequest struct {
-		ToUser string `json:"toUser" validate:"required,max=100"`
-		Amount int64  `json:"amount" validate:"required,gt=0"`
-	}
-	var sendCoinPayload sendCoinRequest
+
+	var sendCoinReq SendCoinRequest
 	return func(w http.ResponseWriter, r *http.Request) error {
 		//get user from context -> call service -> send answer
 		username := r.Context().Value(userCtx).(string)
 		if username == "" {
 			return errs.ErrUnAuth
 		}
-		if err := readJSON(w, r, &sendCoinPayload); err != nil {
+		if err := readJSON(w, r, &sendCoinReq); err != nil {
 			return errs.WrapError(err, http.StatusBadRequest)
 		}
-		if err := Validate.Struct(sendCoinPayload); err != nil {
+		if err := Validate.Struct(sendCoinReq); err != nil {
 			return errs.WrapError(err, http.StatusBadRequest)
 		}
 		transfer := entity.Transfer{
 			Sender:   username,
-			Receiver: sendCoinPayload.ToUser,
-			Amount:   sendCoinPayload.Amount,
+			Receiver: sendCoinReq.ToUser,
+			Amount:   sendCoinReq.Amount,
 		}
-		return service.CreateTransfer(r.Context(), transfer)
+		if err := service.CreateTransfer(r.Context(), transfer); err != nil {
+			return err
+		}
+		w.WriteHeader(http.StatusOK)
+		return nil
 
 	}
 }
 
+//	@Summary	Купить предмет за монеты.
+//	@Security	BearerAuth
+//	@Param		item	path	string	true	"Item Name"
+//	@Success	200
+//	@Failure	400	{object}	ErrorResponse
+//	@Failure	401	{object}	ErrorResponse
+//	@Failure	500	{object}	ErrorResponse
+//	@Router		/buy/{item} [get]
 func BuyItem(service service.Inventory) handlefuncWithError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		//get user from context -> call service -> send answer
@@ -59,21 +90,36 @@ func BuyItem(service service.Inventory) handlefuncWithError {
 			return errs.ErrUnAuth
 		}
 		item_name := r.PathValue("item")
-		return service.BuyItem(r.Context(), username, item_name)
+		if err := service.BuyItem(r.Context(), username, item_name); err != nil {
+			return err
+		}
+		w.WriteHeader(http.StatusOK)
+		return nil
 
 	}
 
 }
 
-func Auth(service service.User) handlefuncWithError {
-	type AuthRequest struct {
-		Username string `json:"username" validate:"required,min=1,max=100"`
-		Password string `json:"password" validate:"required,min=6,max=100"`
-	}
+type AuthRequest struct {
+	Username string `json:"username" validate:"required,min=1,max=100"`
+	Password string `json:"password" validate:"required,min=6,max=100"`
+}
 
-	type envelope struct {
-		Token string `json:"token"`
-	}
+type AuthResponse struct {
+	Token string `json:"token"`
+}
+
+//	@Summary	Аутентификация и получение JWT-токена.
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		AuthRequest	true	"AuthRequest"
+//	@Success	200		{object}	AuthResponse
+//	@Failure	400		{object}	ErrorResponse
+//	@Failure	401		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
+//	@Router		/auth [post]
+func Auth(service service.User) handlefuncWithError {
+
 	var authRequest AuthRequest
 	return func(w http.ResponseWriter, r *http.Request) error {
 
@@ -87,7 +133,7 @@ func Auth(service service.User) handlefuncWithError {
 		if err != nil {
 			return err
 		}
-		return writeJSON(w, &envelope{Token: token})
+		return writeJSON(w, http.StatusOK, &AuthResponse{Token: token})
 
 	}
 
