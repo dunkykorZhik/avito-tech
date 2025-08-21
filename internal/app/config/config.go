@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -37,6 +38,10 @@ func GetConfig() (*Config, error) {
 
 	if err := cleanenv.ReadConfig("./internal/app/config/config.yaml", cfg); err != nil {
 		return nil, err
+	}
+	dbHost := os.Getenv("DATABASE_HOST")
+	if dbHost != "" {
+		cfg.Db.Host = dbHost
 	}
 
 	return cfg, nil

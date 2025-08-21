@@ -28,7 +28,7 @@ func main() {
 
 	db, err := db.NewPostgresDB(cfg)
 	if err != nil || db == nil || db.GetDb() == nil {
-		logger.Fatalw("cannot connect to databse ", err)
+		logger.Fatalw("cannot connect to database ", err)
 		return
 	}
 	defer db.GetDb().Close()
