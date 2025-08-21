@@ -51,8 +51,5 @@ func NewPostgresDB(cfg *config.Config) (Database, error) {
 }
 
 func (p *postgresDB) GetDb() *sql.DB {
-	if p.Db == nil {
-		panic("ahahahaha again")
-	}
 	return p.Db
 }

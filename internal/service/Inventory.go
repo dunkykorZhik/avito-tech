@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"fmt"
 
+	errs "github.com/dunkykorZhik/avito-tech/internal/errors"
 	"github.com/dunkykorZhik/avito-tech/internal/repo"
 )
 
@@ -43,7 +43,7 @@ func (s *InventoryService) buyItemProcess(ctxTx context.Context, username, item_
 		return err
 	}
 	if user.Balance < merch.Cost {
-		return fmt.Errorf("not enough balance")
+		return errs.ErrNotEnoughBalance
 	}
 	if err = s.userRepo.Withdraw(ctxTx, merch.Cost, username); err != nil {
 		return err

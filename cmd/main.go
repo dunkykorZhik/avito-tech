@@ -15,14 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-//	@title						API Avito Shop
-//	@version					1.0.0
-//	@description				API for managing shop transactions.
-//	@host						localhost:8080
-//	@BasePath					/api
-//	@securityDefinitions.apikey	BearerAuth
-//	@in							header
-//	@name						Authorization
 func main() {
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
@@ -35,7 +27,7 @@ func main() {
 	}
 
 	db, err := db.NewPostgresDB(cfg)
-	if err != nil || db == nil {
+	if err != nil || db == nil || db.GetDb() == nil {
 		logger.Fatalw("cannot connect to databse ", err)
 		return
 	}
@@ -72,7 +64,5 @@ func main() {
 
 }
 
-// swagger
-// logger info here and there
 // cors?
 //metrics
