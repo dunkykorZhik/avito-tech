@@ -2,7 +2,7 @@ package entity
 
 type Inventory struct {
 	ID       int64
-	Username string
+	UserID   int64
 	ItemName string
 	Quantity int64
 }

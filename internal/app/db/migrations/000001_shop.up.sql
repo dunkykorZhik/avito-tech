@@ -7,12 +7,12 @@ CREATE TABLE  IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS transfers (
     id SERIAL PRIMARY KEY,
-    sender VARCHAR(50) NOT NULL,
-    receiver VARCHAR(50) NOT NULL,
+    sender INT NOT NULL,
+    receiver INT NOT NULL,
     amount INT NOT NULL CHECK (amount > 0),
     made_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender) REFERENCES users(username) ON DELETE CASCADE,
-    FOREIGN KEY (receiver) REFERENCES users(username) ON DELETE CASCADE,
+    FOREIGN KEY (sender) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver) REFERENCES users(id) ON DELETE CASCADE,
     CHECK (sender <> receiver)
 );
 
@@ -24,10 +24,10 @@ CREATE TABLE  IF NOT EXISTS merch (
 
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
-    item_name  VARCHAR(100) REFERENCES merch(item_name) ON DELETE CASCADE,
+    userID VARCHAR(50) REFERENCES users(id) ON DELETE CASCADE,
+    itemID INT REFERENCES merch(item_id) ON DELETE CASCADE,
     quantity INT NOT NULL CHECK (quantity >= 0),
-    UNIQUE (username, item_name) 
+    UNIQUE (userID, itemID) 
 );
 
 INSERT INTO merch (item_name, cost) VALUES

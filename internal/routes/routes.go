@@ -25,14 +25,17 @@ middleware
 -no such item
 */
 
-type userContext string
+type userInfo struct {
+	id       int64
+	username string
+}
+
+type handlefuncWithError func(w http.ResponseWriter, r *http.Request) error
 
 var (
 	Validate *validator.Validate
-	userCtx  userContext = "username"
+	userCtx  = "user"
 )
-
-type handlefuncWithError func(w http.ResponseWriter, r *http.Request) error
 
 func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
@@ -52,8 +55,6 @@ func AddRoutes(mux *http.ServeMux, services *service.Service, logger *zap.Sugare
 	docs.SwaggerInfo.Host = "localhost:8080"
 	docs.SwaggerInfo.BasePath = "/api"
 
-	//docsURL := fmt.Sprintf("%s/swagger/doc.json", cfg.addr)
-	//mux.Handle("GET /swagger/*", httpSwagger.Handler(httpSwagger.URL(":8080/swagger/doc.json")))
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	mux.Handle("POST /api/auth", loggingMw(Auth(services.User)))
 

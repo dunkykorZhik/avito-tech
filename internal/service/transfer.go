@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/dunkykorZhik/avito-tech/internal/entity"
-	errs "github.com/dunkykorZhik/avito-tech/internal/errors"
 	"github.com/dunkykorZhik/avito-tech/internal/repo"
 )
 
@@ -32,17 +31,13 @@ func (s *TransferService) CreateTransfer(ctx context.Context, transfer entity.Tr
 }
 
 func (s *TransferService) createTransferProcess(ctx context.Context, transfer entity.Transfer) error {
-	sender, err := s.userRepo.GetUserByName(ctx, transfer.Sender)
+
+	if err := s.userRepo.Withdraw(ctx, transfer.Amount, transfer.SenderID); err != nil {
+		return err
+	}
+	var err error
+	transfer.ReceiverID, err = s.userRepo.Deposit(ctx, transfer.Amount, transfer.ReceiverName)
 	if err != nil {
-		return err
-	}
-	if sender.Balance < transfer.Amount {
-		return errs.ErrNotEnoughBalance
-	}
-	if err := s.userRepo.Withdraw(ctx, transfer.Amount, transfer.Sender); err != nil {
-		return err
-	}
-	if err := s.userRepo.Deposit(ctx, transfer.Amount, transfer.Receiver); err != nil {
 		return err
 	}
 	if err := s.transferRepo.CreateTransfer(ctx, transfer); err != nil {

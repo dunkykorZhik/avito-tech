@@ -24,7 +24,7 @@ func (t *transferRepo) CreateTransfer(ctxTx context.Context, transfer entity.Tra
 		return fmt.Errorf("no active transaction")
 	}
 	query := `INSERT INTO transfers (sender, receiver, amount) VALUES ($1,$2,$3)`
-	_, err := tx.ExecContext(ctxTx, query, transfer.Sender, transfer.Receiver, transfer.Amount)
+	_, err := tx.ExecContext(ctxTx, query, transfer.SenderID, transfer.ReceiverID, transfer.Amount)
 	if err != nil {
 		return err
 	}
@@ -32,17 +32,17 @@ func (t *transferRepo) CreateTransfer(ctxTx context.Context, transfer entity.Tra
 
 }
 
-func (t *transferRepo) GetSentHistory(ctx context.Context, username string) ([]entity.Transfer, error) {
-	query := `SELECT id, sender, receiver, amount, made_at FROM transfers WHERE sender = $1`
+func (t *transferRepo) GetSentHistory(ctx context.Context, id int64) ([]entity.Transfer, error) {
+	query := `SELECT  t.id, r.username AS receiver_username, t.amount, t.made_at FROM transfers t JOIN users r ON t.receiver = r.id WHERE t.sender = $1`
 	transfers := []entity.Transfer{}
-	rows, err := t.db.GetDb().QueryContext(ctx, query, username)
+	rows, err := t.db.GetDb().QueryContext(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var t entity.Transfer
-		if err := rows.Scan(&t.ID, &t.Sender, &t.Receiver, &t.Amount, &t.Made_At); err != nil {
+		if err := rows.Scan(&t.ID, &t.ReceiverName, &t.Amount, &t.Made_At); err != nil {
 			return nil, err
 		}
 		transfers = append(transfers, t)
@@ -52,17 +52,17 @@ func (t *transferRepo) GetSentHistory(ctx context.Context, username string) ([]e
 	return transfers, nil
 
 }
-func (t *transferRepo) GetReceivedHistory(ctx context.Context, username string) ([]entity.Transfer, error) {
-	query := `SELECT id, sender, receiver, amount, made_at FROM transfers WHERE receiver=$1`
+func (t *transferRepo) GetReceivedHistory(ctx context.Context, id int64) ([]entity.Transfer, error) {
+	query := `SELECT  t.id, s.username AS sender_username, t.amount, t.made_at FROM transfers t JOIN users s ON t.sender = s.id WHERE t.receiver = $1`
 	transfers := []entity.Transfer{}
-	rows, err := t.db.GetDb().QueryContext(ctx, query, username)
+	rows, err := t.db.GetDb().QueryContext(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var t entity.Transfer
-		if err := rows.Scan(&t.ID, &t.Sender, &t.Receiver, &t.Amount, &t.Made_At); err != nil {
+		if err := rows.Scan(&t.ID, &t.SenderName, &t.Amount, &t.Made_At); err != nil {
 			return nil, err
 		}
 		transfers = append(transfers, t)

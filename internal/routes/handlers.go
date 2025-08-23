@@ -8,21 +8,21 @@ import (
 	"github.com/dunkykorZhik/avito-tech/internal/service"
 )
 
-//	@Summary	Получить информацию о монетах, инвентаре и истории транзакций.
-//	@Security	BearerAuth
-//	@Success	200	{object}	service.InfoResponse
-//	@Failure	400	{object}	ErrorResponse
-//	@Failure	401	{object}	ErrorResponse
-//	@Failure	500	{object}	ErrorResponse
-//	@Router		/info [get]
+// @Summary	Получить информацию о монетах, инвентаре и истории транзакций.
+// @Security	BearerAuth
+// @Success	200	{object}	service.InfoResponse
+// @Failure	400	{object}	ErrorResponse
+// @Failure	401	{object}	ErrorResponse
+// @Failure	500	{object}	ErrorResponse
+// @Router		/info [get]
 func GetInfo(service service.History) handlefuncWithError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		//get user from context -> call service -> send answer
-		username, _ := r.Context().Value(userCtx).(string)
-		if username == "" {
+		user, ok := r.Context().Value(userCtx).(userInfo)
+		if !ok || user.id == 0 {
 			return errs.ErrUnAuth
 		}
-		infoResponse, err := service.GetHistory(r.Context(), username)
+		infoResponse, err := service.GetHistory(r.Context(), user.id)
 		if err != nil {
 			return err
 		}
@@ -35,23 +35,23 @@ type SendCoinRequest struct {
 	Amount int64  `json:"amount" validate:"required,gt=0"`
 }
 
-//	@Summary	Отправить монеты другому пользователю.
-//	@Security	BearerAuth
-//	@Accept		json
-//	@Produce	json
-//	@Param		request	body	SendCoinRequest	true	"SendCoinRequest"
-//	@Success	200
-//	@Failure	400	{object}	ErrorResponse
-//	@Failure	401	{object}	ErrorResponse
-//	@Failure	500	{object}	ErrorResponse
-//	@Router		/sendCoin [post]
+// @Summary	Отправить монеты другому пользователю.
+// @Security	BearerAuth
+// @Accept		json
+// @Produce	json
+// @Param		request	body	SendCoinRequest	true	"SendCoinRequest"
+// @Success	200
+// @Failure	400	{object}	ErrorResponse
+// @Failure	401	{object}	ErrorResponse
+// @Failure	500	{object}	ErrorResponse
+// @Router		/sendCoin [post]
 func SendCoin(service service.Transfer) handlefuncWithError {
 
 	var sendCoinReq SendCoinRequest
 	return func(w http.ResponseWriter, r *http.Request) error {
 		//get user from context -> call service -> send answer
-		username := r.Context().Value(userCtx).(string)
-		if username == "" {
+		user, ok := r.Context().Value(userCtx).(userInfo)
+		if !ok || user.id == 0 {
 			return errs.ErrUnAuth
 		}
 		if err := readJSON(w, r, &sendCoinReq); err != nil {
@@ -60,10 +60,11 @@ func SendCoin(service service.Transfer) handlefuncWithError {
 		if err := Validate.Struct(sendCoinReq); err != nil {
 			return errs.WrapError(err, http.StatusBadRequest)
 		}
+
 		transfer := entity.Transfer{
-			Sender:   username,
-			Receiver: sendCoinReq.ToUser,
-			Amount:   sendCoinReq.Amount,
+			SenderID:     user.id,
+			ReceiverName: sendCoinReq.ToUser,
+			Amount:       sendCoinReq.Amount,
 		}
 		if err := service.CreateTransfer(r.Context(), transfer); err != nil {
 			return err
@@ -74,23 +75,23 @@ func SendCoin(service service.Transfer) handlefuncWithError {
 	}
 }
 
-//	@Summary	Купить предмет за монеты.
-//	@Security	BearerAuth
-//	@Param		item	path	string	true	"Item Name"
-//	@Success	200
-//	@Failure	400	{object}	ErrorResponse
-//	@Failure	401	{object}	ErrorResponse
-//	@Failure	500	{object}	ErrorResponse
-//	@Router		/buy/{item} [get]
+// @Summary	Купить предмет за монеты.
+// @Security	BearerAuth
+// @Param		item	path	string	true	"Item Name"
+// @Success	200
+// @Failure	400	{object}	ErrorResponse
+// @Failure	401	{object}	ErrorResponse
+// @Failure	500	{object}	ErrorResponse
+// @Router		/buy/{item} [get]
 func BuyItem(service service.Inventory) handlefuncWithError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		//get user from context -> call service -> send answer
-		username := r.Context().Value(userCtx).(string)
-		if username == "" {
+		user, ok := r.Context().Value(userCtx).(userInfo)
+		if !ok || user.id == 0 {
 			return errs.ErrUnAuth
 		}
 		item_name := r.PathValue("item")
-		if err := service.BuyItem(r.Context(), username, item_name); err != nil {
+		if err := service.BuyItem(r.Context(), user.id, item_name); err != nil {
 			return err
 		}
 		w.WriteHeader(http.StatusOK)
@@ -109,15 +110,15 @@ type AuthResponse struct {
 	Token string `json:"token"`
 }
 
-//	@Summary	Аутентификация и получение JWT-токена.
-//	@Accept		json
-//	@Produce	json
-//	@Param		request	body		AuthRequest	true	"AuthRequest"
-//	@Success	200		{object}	AuthResponse
-//	@Failure	400		{object}	ErrorResponse
-//	@Failure	401		{object}	ErrorResponse
-//	@Failure	500		{object}	ErrorResponse
-//	@Router		/auth [post]
+// @Summary	Аутентификация и получение JWT-токена.
+// @Accept		json
+// @Produce	json
+// @Param		request	body		AuthRequest	true	"AuthRequest"
+// @Success	200		{object}	AuthResponse
+// @Failure	400		{object}	ErrorResponse
+// @Failure	401		{object}	ErrorResponse
+// @Failure	500		{object}	ErrorResponse
+// @Router		/auth [post]
 func Auth(service service.User) handlefuncWithError {
 
 	var authRequest AuthRequest

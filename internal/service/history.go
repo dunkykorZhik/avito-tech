@@ -21,23 +21,23 @@ func NewHistoryService(userRepo repo.User, transferRepo repo.Transfer, inventory
 	}
 }
 
-func (s *HistoryService) GetHistory(ctx context.Context, username string) (*InfoResponse, error) {
+func (s *HistoryService) GetHistory(ctx context.Context, userID int64) (*InfoResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, ctxTimeout)
 	defer cancel()
 
-	user, err := s.userRepo.GetUserByName(ctx, username)
+	user, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	sent, err := s.transferRepo.GetSentHistory(ctx, username)
+	sent, err := s.transferRepo.GetSentHistory(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	received, err := s.transferRepo.GetReceivedHistory(ctx, username)
+	received, err := s.transferRepo.GetReceivedHistory(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	inventory, err := s.inventoryRepo.GetInventory(ctx, username)
+	inventory, err := s.inventoryRepo.GetInventory(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func createOutput(balance int64, sent, received []entity.Transfer, inventory []e
 	s := make([]SentOutput, 0, len(sent))
 	for _, transfer := range sent {
 		s = append(s, SentOutput{
-			transfer.Receiver,
+			transfer.ReceiverName,
 			transfer.Amount,
 		})
 
@@ -58,7 +58,7 @@ func createOutput(balance int64, sent, received []entity.Transfer, inventory []e
 	r := make([]ReceivedOutput, 0, len(received))
 	for _, transfer := range received {
 		r = append(r, ReceivedOutput{
-			transfer.Sender,
+			transfer.SenderName,
 			transfer.Amount,
 		})
 
@@ -74,7 +74,7 @@ func createOutput(balance int64, sent, received []entity.Transfer, inventory []e
 
 	return &InfoResponse{
 		Balance:         balance,
-		CoinHistory:     CoinHistory{s, r},
+		TransferHistory: TransferHistory{s, r},
 		InventoryOutput: i,
 	}
 

@@ -39,11 +39,14 @@ func AuthMiddleware(service service.User) func(handlefuncWithError) handlefuncWi
 			if !ok {
 				return errs.ErrUnAuth
 			}
-			username, err := service.ParseToken(token)
+			userID, username, err := service.ParseToken(token)
 			if err != nil {
 				return err
 			}
-			ctx := context.WithValue(r.Context(), userCtx, username)
+			ctx := context.WithValue(r.Context(), userCtx, userInfo{
+				userID,
+				username,
+			})
 			return hwe(w, r.WithContext(ctx))
 
 		}
