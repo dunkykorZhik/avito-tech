@@ -1,9 +1,4 @@
 
----
-
-### For **avito-tech** (`README.md`)
-
-```markdown
 # avito-tech
 
 ## Microservice for Internal Money Transfer and Purchase System
